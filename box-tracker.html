@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>📦 Box Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f0e8;
+    --card: #fffdf7;
+    --primary: #c85a2a;
+    --primary-light: #f0ddd3;
+    --accent: #2a6e4e;
+    --ink: #1a1208;
+    --muted: #8a7a66;
+    --border: #ddd5c5;
+    --shadow: 0 2px 12px rgba(26,18,8,0.1);
+    --radius: 14px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    padding-bottom: 100px;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--primary);
+    color: #fff;
+    padding: 20px 18px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 16px rgba(200,90,42,0.35);
+  }
+  header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.6rem;
+    letter-spacing: -0.3px;
+  }
+  header p { font-size: 0.8rem; opacity: 0.85; margin-top: 2px; }
+
+  .stats-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .stat-pill {
+    background: rgba(255,255,255,0.2);
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+  .stat-pill span { opacity: 0.8; font-weight: 400; }
+
+  /* MAIN AREA */
+  main { padding: 16px; max-width: 600px; margin: 0 auto; }
+
+  /* ADD BOX BUTTON */
+  .add-box-btn {
+    width: 100%;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    padding: 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 18px;
+    box-shadow: 0 3px 10px rgba(42,110,78,0.3);
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .add-box-btn:active { transform: scale(0.97); box-shadow: none; }
+
+  /* BOX CARD */
+  .box-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 16px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .box-header {
+    display: flex;
+    align-items: center;
+    padding: 14px 16px;
+    gap: 12px;
+    cursor: pointer;
+    user-select: none;
+    background: var(--card);
+    transition: background 0.15s;
+  }
+  .box-header:active { background: var(--primary-light); }
+
+  .box-num {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: var(--primary);
+    color: #fff;
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .box-title-wrap { flex: 1; min-width: 0; }
+  .box-name {
+    font-weight: 600;
+    font-size: 1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .box-meta {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-top: 1px;
+  }
+
+  .box-actions { display: flex; gap: 6px; align-items: center; }
+  .icon-btn {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+  .icon-btn:active { background: var(--primary-light); }
+  .icon-btn.danger:active { background: #fde8e8; }
+
+  .chevron {
+    transition: transform 0.25s;
+    color: var(--muted);
+    font-size: 0.75rem;
+  }
+  .chevron.open { transform: rotate(180deg); }
+
+  /* BOX BODY */
+  .box-body {
+    display: none;
+    padding: 0 16px 14px;
+    border-top: 1px solid var(--border);
+  }
+  .box-body.open { display: block; }
+
+  /* ADD ITEM ROW */
+  .add-item-row {
+    display: flex;
+    gap: 8px;
+    padding: 12px 0 10px;
+  }
+  .add-item-row input {
+    flex: 1;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 9px 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    background: var(--bg);
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .add-item-row input:focus { border-color: var(--primary); }
+  .add-item-btn {
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 9px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .add-item-btn:active { opacity: 0.85; }
+
+  /* ITEM ROW */
+  .item-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 0;
+    border-bottom: 1px dashed var(--border);
+  }
+  .item-row:last-child { border-bottom: none; }
+
+  .item-photo-wrap {
+    flex-shrink: 0;
+    position: relative;
+  }
+  .item-thumb {
+    width: 42px;
+    height: 42px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 1.5px solid var(--border);
+    cursor: pointer;
+    display: block;
+  }
+  .item-photo-placeholder {
+    width: 42px;
+    height: 42px;
+    border-radius: 8px;
+    border: 1.5px dashed var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    cursor: pointer;
+    background: var(--bg);
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .item-photo-placeholder:active { background: var(--primary-light); border-color: var(--primary); }
+
+  .item-name {
+    flex: 1;
+    font-size: 0.9rem;
+    min-width: 0;
+    word-break: break-word;
+  }
+
+  .counter {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .counter-btn {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: var(--bg);
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 600;
+    transition: background 0.1s;
+  }
+  .counter-btn:active { background: var(--primary-light); }
+  .counter-val {
+    min-width: 24px;
+    text-align: center;
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+
+  .delete-item-btn {
+    width: 26px; height: 26px;
+    border-radius: 7px;
+    border: none;
+    background: transparent;
+    color: #cc4444;
+    font-size: 1.1rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .delete-item-btn:active { background: #fde8e8; }
+
+  /* PHOTO INPUT HIDDEN */
+  .photo-input { display: none; }
+
+  /* PHOTO LIGHTBOX */
+  .lightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .lightbox.open { display: flex; }
+  .lightbox img {
+    max-width: 100%;
+    max-height: 85vh;
+    border-radius: 12px;
+    object-fit: contain;
+  }
+  .lightbox-close {
+    position: absolute;
+    top: 16px; right: 16px;
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 38px; height: 38px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 200;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0 16px 24px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--card);
+    border-radius: 20px 20px 16px 16px;
+    padding: 24px 20px 20px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 -4px 30px rgba(0,0,0,0.2);
+  }
+  .modal h3 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.2rem;
+    margin-bottom: 14px;
+  }
+  .modal input {
+    width: 100%;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 11px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem;
+    background: var(--bg);
+    color: var(--ink);
+    outline: none;
+    margin-bottom: 14px;
+  }
+  .modal input:focus { border-color: var(--primary); }
+  .modal-btns { display: flex; gap: 10px; }
+  .modal-btns button {
+    flex: 1;
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn-cancel { background: var(--border); color: var(--ink); }
+  .btn-confirm { background: var(--primary); color: #fff; }
+  .btn-confirm:active { opacity: 0.9; }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--muted);
+  }
+  .empty-state .emoji { font-size: 3rem; display: block; margin-bottom: 12px; }
+  .empty-state p { font-size: 0.95rem; line-height: 1.5; }
+
+  /* TOTAL BANNER */
+  .total-banner {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--ink);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    font-size: 0.9rem;
+    z-index: 50;
+  }
+  .total-banner .label { opacity: 0.7; }
+  .total-banner .value {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.3rem;
+    letter-spacing: -0.3px;
+  }
+  .total-items { text-align: right; }
+
+  /* Box name edit */
+  .box-name-input {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--ink);
+    width: 100%;
+    cursor: text;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📦 Box Tracker</h1>
+  <p>Packing & Moving Assistant</p>
+  <div class="stats-row">
+    <div class="stat-pill" id="stat-boxes"><span>Boxes: </span><span id="sBoxes">0</span></div>
+    <div class="stat-pill" id="stat-items"><span>Items: </span><span id="sItems">0</span></div>
+    <div class="stat-pill" id="stat-qty"><span>Total Qty: </span><span id="sQty">0</span></div>
+  </div>
+</header>
+
+<main>
+  <button class="add-box-btn" onclick="openAddBoxModal()">
+    ＋ Add New Box
+  </button>
+  <div id="boxes-container"></div>
+  <div class="empty-state" id="empty-state">
+    <span class="emoji">📦</span>
+    <p>No boxes yet.<br>Tap <strong>Add New Box</strong> to start packing!</p>
+  </div>
+</main>
+
+<!-- Total Banner -->
+<div class="total-banner">
+  <div>
+    <div class="label">Grand Total</div>
+    <div class="value" id="grand-total">0 items</div>
+  </div>
+  <div class="total-items">
+    <div class="label">Unique types</div>
+    <div class="value" id="grand-types">0</div>
+  </div>
+</div>
+
+<!-- Add Box Modal -->
+<div class="modal-overlay" id="addBoxModal">
+  <div class="modal">
+    <h3>New Box</h3>
+    <input type="text" id="newBoxName" placeholder="e.g. Kitchen, Bedroom, Books…" maxlength="40">
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeAddBoxModal()">Cancel</button>
+      <button class="btn-confirm" onclick="confirmAddBox()">Add Box</button>
+    </div>
+  </div>
+</div>
+
+<!-- Photo Lightbox -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+  <img id="lightbox-img" src="" alt="Item photo">
+</div>
+
+<script>
+// ─── Data Layer ───────────────────────────────────────────────────────────────
+const STORAGE_KEY = 'boxtracker_v1';
+
+function load() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+  catch { return []; }
+}
+
+function save(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+let boxes = load();
+let nextBoxId = boxes.length ? Math.max(...boxes.map(b => b.id)) + 1 : 1;
+
+// ─── Rendering ────────────────────────────────────────────────────────────────
+function render() {
+  const container = document.getElementById('boxes-container');
+  const empty = document.getElementById('empty-state');
+  container.innerHTML = '';
+
+  if (boxes.length === 0) {
+    empty.style.display = 'block';
+  } else {
+    empty.style.display = 'none';
+    boxes.forEach(box => {
+      container.appendChild(renderBox(box));
+    });
+  }
+  updateStats();
+}
+
+function renderBox(box) {
+  const totalQty = box.items.reduce((s, i) => s + i.qty, 0);
+  const card = document.createElement('div');
+  card.className = 'box-card';
+  card.id = `box-${box.id}`;
+
+  const isOpen = box.open !== false;
+
+  card.innerHTML = `
+    <div class="box-header" onclick="toggleBox(${box.id})">
+      <div class="box-num">${box.id}</div>
+      <div class="box-title-wrap">
+        <div class="box-name">${escHtml(box.name)}</div>
+        <div class="box-meta">${box.items.length} item type${box.items.length !== 1 ? 's' : ''} · ${totalQty} total qty</div>
+      </div>
+      <div class="box-actions" onclick="event.stopPropagation()">
+        <button class="icon-btn" title="Rename" onclick="renameBox(${box.id})">✏️</button>
+        <button class="icon-btn danger" title="Delete box" onclick="deleteBox(${box.id})">🗑️</button>
+      </div>
+      <div class="chevron ${isOpen ? 'open' : ''}">▼</div>
+    </div>
+    <div class="box-body ${isOpen ? 'open' : ''}" id="body-${box.id}">
+      <div class="add-item-row">
+        <input type="text" placeholder="Add item…" id="newitem-${box.id}" maxlength="60"
+          onkeydown="if(event.key==='Enter') addItem(${box.id})">
+        <button class="add-item-btn" onclick="addItem(${box.id})">Add</button>
+      </div>
+      <div id="items-${box.id}">
+        ${box.items.map(item => renderItemHTML(box.id, item)).join('')}
+      </div>
+    </div>
+  `;
+  return card;
+}
+
+function renderItemHTML(boxId, item) {
+  const photoHTML = item.photo
+    ? `<img src="${item.photo}" class="item-thumb" alt="photo"
+          onclick="openLightbox('${item.id}')" title="View / Change photo"
+          ondblclick="changePhoto(${boxId},'${item.id}')">`
+    : `<div class="item-photo-placeholder" onclick="changePhoto(${boxId},'${item.id}')" title="Attach photo">📷</div>`;
+
+  return `
+    <div class="item-row" id="item-${item.id}">
+      <div class="item-photo-wrap">${photoHTML}</div>
+      <div class="item-name">${escHtml(item.name)}</div>
+      <div class="counter">
+        <button class="counter-btn" onclick="adjustQty(${boxId},'${item.id}',-1)">−</button>
+        <div class="counter-val" id="qty-${item.id}">${item.qty}</div>
+        <button class="counter-btn" onclick="adjustQty(${boxId},'${item.id}',1)">＋</button>
+      </div>
+      <button class="delete-item-btn" onclick="deleteItem(${boxId},'${item.id}')" title="Remove">✕</button>
+      <input type="file" accept="image/*" capture="environment"
+        class="photo-input" id="photo-input-${item.id}"
+        onchange="handlePhoto(${boxId},'${item.id}',this)">
+    </div>`;
+}
+
+function updateStats() {
+  let totalItems = 0, totalQty = 0;
+  boxes.forEach(b => {
+    totalItems += b.items.length;
+    totalQty += b.items.reduce((s, i) => s + i.qty, 0);
+  });
+  document.getElementById('sBoxes').textContent = boxes.length;
+  document.getElementById('sItems').textContent = totalItems;
+  document.getElementById('sQty').textContent = totalQty;
+  document.getElementById('grand-total').textContent = totalQty + ' item' + (totalQty !== 1 ? 's' : '');
+  document.getElementById('grand-types').textContent = totalItems;
+}
+
+// ─── Box Operations ───────────────────────────────────────────────────────────
+function openAddBoxModal() {
+  document.getElementById('newBoxName').value = '';
+  document.getElementById('addBoxModal').classList.add('open');
+  setTimeout(() => document.getElementById('newBoxName').focus(), 100);
+}
+function closeAddBoxModal() {
+  document.getElementById('addBoxModal').classList.remove('open');
+}
+function confirmAddBox() {
+  const name = document.getElementById('newBoxName').value.trim() || `Box ${nextBoxId}`;
+  boxes.push({ id: nextBoxId++, name, items: [], open: true });
+  save(boxes);
+  render();
+  closeAddBoxModal();
+}
+
+function toggleBox(id) {
+  const box = boxes.find(b => b.id === id);
+  box.open = !box.open;
+  save(boxes);
+  document.getElementById(`body-${id}`).classList.toggle('open', box.open);
+  const header = document.querySelector(`#box-${id} .box-header`);
+  header.querySelector('.chevron').classList.toggle('open', box.open);
+}
+
+function deleteBox(id) {
+  if (!confirm('Delete this box and all its items?')) return;
+  boxes = boxes.filter(b => b.id !== id);
+  save(boxes);
+  render();
+}
+
+function renameBox(id) {
+  const box = boxes.find(b => b.id === id);
+  const newName = prompt('Rename box:', box.name);
+  if (newName !== null && newName.trim()) {
+    box.name = newName.trim();
+    save(boxes);
+    render();
+  }
+}
+
+// ─── Item Operations ──────────────────────────────────────────────────────────
+function addItem(boxId) {
+  const input = document.getElementById(`newitem-${boxId}`);
+  const name = input.value.trim();
+  if (!name) return;
+  const box = boxes.find(b => b.id === boxId);
+  const itemId = Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+  box.items.push({ id: itemId, name, qty: 1, photo: null });
+  save(boxes);
+  input.value = '';
+  // Re-render just the items list for speed
+  document.getElementById(`items-${boxId}`).innerHTML =
+    box.items.map(i => renderItemHTML(boxId, i)).join('');
+  updateStats();
+  updateBoxMeta(box);
+}
+
+function adjustQty(boxId, itemId, delta) {
+  const box = boxes.find(b => b.id === boxId);
+  const item = box.items.find(i => i.id === itemId);
+  item.qty = Math.max(0, item.qty + delta);
+  save(boxes);
+  document.getElementById(`qty-${itemId}`).textContent = item.qty;
+  updateStats();
+  updateBoxMeta(box);
+}
+
+function deleteItem(boxId, itemId) {
+  const box = boxes.find(b => b.id === boxId);
+  box.items = box.items.filter(i => i.id !== itemId);
+  save(boxes);
+  document.getElementById(`items-${boxId}`).innerHTML =
+    box.items.map(i => renderItemHTML(boxId, i)).join('');
+  updateStats();
+  updateBoxMeta(box);
+}
+
+function updateBoxMeta(box) {
+  const totalQty = box.items.reduce((s, i) => s + i.qty, 0);
+  const el = document.querySelector(`#box-${box.id} .box-meta`);
+  if (el) el.textContent = `${box.items.length} item type${box.items.length !== 1 ? 's' : ''} · ${totalQty} total qty`;
+}
+
+// ─── Photo ────────────────────────────────────────────────────────────────────
+function changePhoto(boxId, itemId) {
+  document.getElementById(`photo-input-${itemId}`).click();
+}
+
+function handlePhoto(boxId, itemId, input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    // Compress/resize before storing
+    const img = new Image();
+    img.onload = () => {
+      const MAX = 600;
+      let w = img.width, h = img.height;
+      if (w > MAX || h > MAX) {
+        if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+        else { w = Math.round(w * MAX / h); h = MAX; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.75);
+      const box = boxes.find(b => b.id === boxId);
+      const item = box.items.find(i => i.id === itemId);
+      item.photo = dataUrl;
+      save(boxes);
+      // Update just the photo cell
+      const photoWrap = document.querySelector(`#item-${itemId} .item-photo-wrap`);
+      photoWrap.innerHTML = `<img src="${dataUrl}" class="item-thumb" alt="photo"
+        onclick="openLightbox('${itemId}')"
+        ondblclick="changePhoto(${boxId},'${itemId}')">`;
+      // Re-add hidden file input
+      const row = document.getElementById(`item-${itemId}`);
+      let fi = document.getElementById(`photo-input-${itemId}`);
+      if (!fi) {
+        fi = document.createElement('input');
+        fi.type = 'file'; fi.accept = 'image/*'; fi.setAttribute('capture','environment');
+        fi.className = 'photo-input'; fi.id = `photo-input-${itemId}`;
+        fi.onchange = function() { handlePhoto(boxId, itemId, this); };
+        row.appendChild(fi);
+      }
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+// Lightbox
+function openLightbox(itemId) {
+  for (const box of boxes) {
+    const item = box.items.find(i => i.id === itemId);
+    if (item && item.photo) {
+      document.getElementById('lightbox-img').src = item.photo;
+      document.getElementById('lightbox').classList.add('open');
+      return;
+    }
+  }
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Close modal on backdrop click
+document.getElementById('addBoxModal').addEventListener('click', function(e) {
+  if (e.target === this) closeAddBoxModal();
+});
+
+// Keyboard: Enter to confirm new box
+document.getElementById('newBoxName').addEventListener('keydown', e => {
+  if (e.key === 'Enter') confirmAddBox();
+});
+
+// Init
+render();
+</script>
+</body>
+</html>
